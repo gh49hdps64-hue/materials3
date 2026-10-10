@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dental Materials Crossword Review — Practice Test</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0c0e14;
+    --surface: #13151f;
+    --surface2: #1a1d2b;
+    --surface3: #20243a;
+    --border: #272b40;
+    --border2: #333858;
+    --accent: #6ee7b7;
+    --accent2: #818cf8;
+    --accent3: #fb923c;
+    --correct: #34d399;
+    --wrong: #f87171;
+    --text: #e2e8f8;
+    --muted: #6b7494;
+    --mono: 'DM Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+    --display: 'Syne', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-weight: 300;
+    min-height: 100vh;
+  }
+
+  .progress-wrap {
+    height: 2px;
+    background: var(--border);
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 300;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent3));
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 36px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 200;
+    backdrop-filter: blur(8px);
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .header-left h1 {
+    font-family: var(--display);
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+  .header-left .subtitle {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--muted);
+    margin-top: 3px;
+    letter-spacing: 0.05em;
+  }
+  .score-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .score-pill {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .score-pill span { color: var(--accent); font-weight: 500; }
+  .reset-btn-header {
+    background: transparent;
+    border: 1px solid var(--border2);
+    color: var(--muted);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .reset-btn-header:hover { border-color: var(--accent3); color: var(--accent3); }
+
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 48px 24px 100px;
+  }
+
+  .section-label {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 56px 0 22px;
+  }
+  .section-label:first-of-type { margin-top: 0; }
+  .section-num {
+    font-family: var(--display);
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    color: var(--bg);
+    background: var(--accent2);
+    padding: 3px 10px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+  .section-title {
+    font-family: var(--display);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: 0.01em;
+  }
+  .section-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .q-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 22px 26px;
+    margin-bottom: 12px;
+    transition: border-color 0.25s, box-shadow 0.25s;
+  }
+  .q-card:hover { border-color: var(--border2); }
+  .q-card.answered-correct {
+    border-color: rgba(52,211,153,0.45);
+    box-shadow: 0 0 0 1px rgba(52,211,153,0.12) inset;
+  }
+  .q-card.answered-wrong {
+    border-color: rgba(248,113,113,0.45);
+    box-shadow: 0 0 0 1px rgba(248,113,113,0.1) inset;
+  }
+
+  .q-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .q-num {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--muted);
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    padding: 2px 9px;
+    border-radius: 5px;
+  }
+
+  .q-text {
+    font-size: 0.93rem;
+    line-height: 1.65;
+    color: var(--text);
+    font-weight: 400;
+    margin-bottom: 16px;
+  }
+
+  .options { display: flex; flex-direction: column; gap: 7px; }
+
+  .opt {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: left;
+    width: 100%;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 0.87rem;
+    font-weight: 300;
+    line-height: 1.55;
+  }
+  .opt:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: rgba(110,231,183,0.06);
+  }
+  .opt:disabled { cursor: default; }
+
+  .opt-letter {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--muted);
+    background: var(--surface3);
+    width: 22px;
+    height: 22px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+    transition: all 0.15s;
+  }
+
+  .opt.correct-ans { border-color: var(--correct) !important; background: rgba(52,211,153,0.1) !important; }
+  .opt.correct-ans .opt-letter { background: var(--correct); color: #0c0e14; }
+  .opt.wrong-ans { border-color: var(--wrong) !important; background: rgba(248,113,113,0.09) !important; }
+  .opt.wrong-ans .opt-letter { background: var(--wrong); color: #0c0e14; }
+  .opt.reveal-correct { border-color: rgba(52,211,153,0.35) !important; background: rgba(52,211,153,0.05) !important; }
+  .opt.reveal-correct .opt-letter { color: var(--correct); background: rgba(52,211,153,0.15); }
+
+  .feedback {
+    margin-top: 12px;
+    padding: 11px 16px;
+    border-radius: 8px;
+    font-size: 0.84rem;
+    line-height: 1.6;
+    display: none;
+  }
+  .feedback.show { display: block; }
+  .feedback.correct-fb { background: rgba(52,211,153,0.09); border: 1px solid rgba(52,211,153,0.28); color: #86efcb; }
+  .feedback.wrong-fb { background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.24); color: #fca5a5; }
+  .feedback strong { font-weight: 500; }
+
+  @media (max-width: 600px) {
+    header { padding: 14px 16px; }
+    .container { padding: 32px 14px 80px; }
+    .q-card { padding: 16px 16px; }
+    .header-left h1 { font-size: 0.9rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-wrap"><div class="progress-fill" id="progressFill"></div></div>
+
+<header>
+  <div class="header-left">
+    <h1>Dental Materials — Crossword Review Practice Test</h1>
+    <div class="subtitle">Digital Manufacturing · Adaptive Learning 1 · Adaptive Learning 2 · Finishing and Polishing</div>
+  </div>
+  <div class="score-bar">
+    <div class="score-pill">Answered: <span id="answeredCount">0</span> / <span id="totalCount">0</span></div>
+    <div class="score-pill">Score: <span id="scoreCount">0</span> correct</div>
+    <button class="reset-btn-header" onclick="resetAll()">↺ Reset</button>
+  </div>
+</header>
+
+<div class="container" id="examContainer"></div>
+
+<script>
+const sections = [
+  {
+    label: "Digital Manufacturing",
+    questions: [
+      { id: "dm01", text: "CAM calculates these for milling — the equivalent of slices used in 3D printing.", options: ["Toolpaths", "Slices", "Support structures", "Bur trajectories"], correct: 0 },
+      { id: "dm02", text: "Orientation relative to the printed layers at which a 3D-printed denture base is strongest.", options: ["Perpendicular to layers", "At 45 degrees", "Parallel to layers", "Any direction is equal"], correct: 2 },
+      { id: "dm03", text: "Soft-milled pre-sintered zirconia shrinks 20–25% during this processing step.", options: ["Glazing", "Polishing", "Debinding", "Sintering"], correct: 3 },
+      { id: "dm04", text: "A printed restoration's properties depend most on this person's settings.", options: ["Material manufacturer", "Operator", "Printer manufacturer", "Prescribing dentist"], correct: 1 },
+      { id: "dm05", text: "Along with material jetting and powder bed fusion, this printing family completes the three dominant 3D printing technologies in dentistry.", options: ["Vat photopolymerization", "Fused deposition modeling", "Binder jetting", "Selective laser sintering"], correct: 0 },
+      { id: "dm06", text: "What separates SLA, DLP, and LCD from one another within vat photopolymerization.", options: ["Resin chemistry", "Light delivery method", "Layer thickness achievable", "Build platform orientation"], correct: 1 },
+      { id: "dm07", text: "Milling with a worn bur mainly causes these at the margins.", options: ["Chipping and fractures", "Darker staining", "Wider gaps", "Rougher internal surfaces"], correct: 2 },
+      { id: "dm08", text: "Property mainly improved by adding more milling axes (e.g., 3-axis to 5-axis).", options: ["Material translucency", "Shade matching accuracy", "Surface gloss", "Marginal fit"], correct: 3 },
+      { id: "dm09", text: "What a 3D-printed occlusal guard remains if washed but NOT post-cured.", options: ["Cytotoxic", "Dimensionally unstable", "Underpolymerized but biocompatible", "Fully functional with reduced strength"], correct: 0 },
+      { id: "dm10", text: "Along with edges and faces, these build a triangle mesh (STL file).", options: ["Vertices", "Nodes", "Pixels", "Voxels"], correct: 0 }
+    ]
+  },
+  {
+    label: "Adaptive Learning 1",
+    questions: [
+      { id: "a101", text: "Main monomer of the bond; more hydrophobic and also present in resin composites.", options: ["TEGDMA", "UDMA", "Bis-GMA", "MMA"], correct: 2 },
+      { id: "a102", text: "Preventing this is NOT a valid reason to replace amalgam restorations.", options: ["Secondary caries", "Fracture of remaining tooth structure", "Mercury poisoning", "Esthetic preference"], correct: 2 },
+      { id: "a103", text: "Second step of a total-etch 3-step adhesive system.", options: ["Etchant", "Bond", "Primer", "Self-etch adhesive"], correct: 2 },
+      { id: "a104", text: "OptiBond FL bond has too few of these monomers to be applied directly to dentin.", options: ["Hydrophobic", "Acidic", "Cross-linking", "Hydrophilic"], correct: 3 },
+      { id: "a105", text: "Ideal condition of the dentin surface after etching and rinsing.", options: ["Moist", "Dry", "Saturated with water", "Coated with air"], correct: 0 },
+      { id: "a106", text: "Isolation used during amalgam removal for patient protection and a dry field.", options: ["Rubber dam", "Cotton rolls", "Retraction cord", "Dry angle"], correct: 0 },
+      { id: "a107", text: "Etching enamel with phosphoric acid increases surface roughness, surface area, and surface this.", options: ["Conductance", "Solubility", "Porosity", "Energy"], correct: 3 },
+      { id: "a108", text: "Cavity preparation design with the highest C-factor.", options: ["Class II", "Class III", "Class V", "Class I"], correct: 3 },
+      { id: "a109", text: "Agitating phosphoric acid shear-thins it, reducing this.", options: ["Surface tension", "pH", "Concentration", "Viscosity"], correct: 3 },
+      { id: "a110", text: "VALO mode used to cure each 2.0 mm increment of Harmonize composite.", options: ["Standard", "Turbo", "Xtra power", "High power"], correct: 0 }
+    ]
+  },
+  {
+    label: "Adaptive Learning 2",
+    questions: [
+      { id: "a201", text: "Conditioning agent applied to dentin for 10 to 20 seconds before glass ionomer placement.", options: ["Phosphoric acid", "EDTA", "Polyacrylic acid", "Maleic acid"], correct: 2 },
+      { id: "a202", text: "Sodium ___: toothpaste fluoride that must be hydrolyzed by salivary enzymes to release fluoride.", options: ["Fluoride", "Stannous fluoride", "Monofluorophosphate", "Hexafluorosilicate"], correct: 2 },
+      { id: "a203", text: "Used to remove carious tissue during ART (Atraumatic Restorative Treatment).", options: ["High-speed carbide burs", "Laser ablation", "Hand instruments", "Air abrasion"], correct: 2 },
+      { id: "a204", text: "Common side effect of silver diamine fluoride on carious lesions.", options: ["White discoloration", "Black staining", "Increased sensitivity", "Gingival inflammation"], correct: 1 },
+      { id: "a205", text: "Topical fluoride product with the highest fluoride concentration.", options: ["OTC mouthwash", "Varnish", "Prescription toothpaste", "Fluoride gel"], correct: 1 },
+      { id: "a206", text: "Isolation used to place a glass ionomer, since it needs moisture to set.", options: ["Cotton rolls", "Rubber dam", "Retraction cord", "Dry angle"], correct: 0 },
+      { id: "a207", text: "Type of bond glass ionomer forms with tooth structure, an advantage in caries-prone areas.", options: ["Mechanical", "Chemical", "Micromechanical", "Ionic diffusion only"], correct: 1 },
+      { id: "a208", text: "Fluoride concentration in drinking water (ppm) recommended by the USPHS and ADA.", options: ["Point five (.5)", "One (1.0)", "One point two (1.2)", "Point seven (.7)"], correct: 3 },
+      { id: "a209", text: "How long to wait before finishing and polishing a conventional glass ionomer.", options: ["Immediately", "One week", "Ten minutes", "Twenty-four hours"], correct: 3 },
+      { id: "a210", text: "Unlike strength, esthetics, and wear resistance, this is NOT higher in RMGI than in conventional glass ionomer.", options: ["Strength", "Fluoride release", "Wear resistance", "Esthetics"], correct: 1 }
+    ]
+  },
+  {
+    label: "Finishing and Polishing",
+    questions: [
+      { id: "fp01", text: "What Co-Cr alloys cannot be, unlike gold.", options: ["Polished", "Sintered", "Annealed", "Burnished"], correct: 3 },
+      { id: "fp02", text: "What the abrasive must be relative to the substrate for efficient abrasion.", options: ["Harder", "Softer", "Equal hardness", "Smoother"], correct: 0 },
+      { id: "fp03", text: "Polishing uses abrasive particles of this size or less.", options: ["Five microns", "Two microns", "Thirty microns", "Forty-five microns"], correct: 0 },
+      { id: "fp04", text: "State in which zirconia is best polished.", options: ["Sintered", "Presintered", "Glazed state", "Stained state"], correct: 1 },
+      { id: "fp05", text: "Degrees the stroke direction is turned at each new grit.", options: ["Forty-five", "Ninety", "Thirty", "One eighty"], correct: 1 },
+      { id: "fp06", text: "Amalgams of this particle shape can be polished sooner.", options: ["Admixed", "Spherical", "Lathe-cut", "Low-copper"], correct: 1 },
+      { id: "fp07", text: "Ra in microns below which further smoothing no longer reduces plaque retention.", options: ["Point zero two (.02)", "Point five (.5)", "Point two (.2)", "Two (2.0)"], correct: 2 },
+      { id: "fp08", text: "Polishing a glass-ceramic comes at this point relative to glazing.", options: ["After", "Before", "Instead of", "Simultaneously with"], correct: 1 },
+      { id: "fp09", text: "Why the Mylar strip surface of a resin composite is removed.", options: ["Filler rich", "Too opaque", "Resin rich", "Stain resistant"], correct: 2 },
+      { id: "fp10", text: "Abrasive grains glued to a disc or strip.", options: ["Bonded", "Sintered", "Laminated", "Coated"], correct: 3 }
+    ]
+  }
+];
+
+let answered = {};
+let scores = { correct: 0, total: 0 };
+
+function buildExam() {
+  const container = document.getElementById('examContainer');
+  container.innerHTML = '';
+  let totalQ = 0;
+
+  sections.forEach((section, si) => {
+    const secDiv = document.createElement('div');
+    secDiv.className = 'section-label';
+
+    const secNum = document.createElement('span');
+    secNum.className = 'section-num';
+    secNum.textContent = `Set ${si + 1}`;
+
+    const secTitle = document.createElement('span');
+    secTitle.className = 'section-title';
+    secTitle.textContent = section.label;
+
+    const secLine = document.createElement('div');
+    secLine.className = 'section-line';
+
+    secDiv.appendChild(secNum);
+    secDiv.appendChild(secTitle);
+    secDiv.appendChild(secLine);
+    container.appendChild(secDiv);
+
+    section.questions.forEach((q) => {
+      totalQ++;
+      const card = document.createElement('div');
+      card.className = 'q-card';
+      card.id = 'card-' + q.id;
+
+      const meta = document.createElement('div');
+      meta.className = 'q-meta';
+      const num = document.createElement('span');
+      num.className = 'q-num';
+      num.textContent = 'Q' + totalQ;
+      meta.appendChild(num);
+      card.appendChild(meta);
+
+      const qText = document.createElement('div');
+      qText.className = 'q-text';
+      qText.textContent = q.text;
+      card.appendChild(qText);
+
+      const optWrap = document.createElement('div');
+      optWrap.className = 'options';
+      const letters = ['A','B','C','D'];
+
+      q.options.forEach((opt, oi) => {
+        const btn = document.createElement('button');
+        btn.className = 'opt';
+        btn.id = 'opt-' + q.id + '-' + oi;
+        btn.innerHTML = `<span class="opt-letter">${letters[oi]}</span><span>${opt}</span>`;
+        btn.addEventListener('click', () => answerQ(q, oi));
+        optWrap.appendChild(btn);
+      });
+
+      card.appendChild(optWrap);
+
+      const feedback = document.createElement('div');
+      feedback.className = 'feedback';
+      feedback.id = 'fb-' + q.id;
+      card.appendChild(feedback);
+
+      container.appendChild(card);
+    });
+  });
+
+  document.getElementById('totalCount').textContent = totalQ;
+  scores.total = totalQ;
+  updateProgress();
+}
+
+function answerQ(q, chosen) {
+  if (answered[q.id]) return;
+  answered[q.id] = true;
+  const isCorrect = chosen === q.correct;
+  if (isCorrect) scores.correct++;
+
+  const card = document.getElementById('card-' + q.id);
+  card.classList.add(isCorrect ? 'answered-correct' : 'answered-wrong');
+
+  q.options.forEach((_, oi) => {
+    const btn = document.getElementById('opt-' + q.id + '-' + oi);
+    btn.disabled = true;
+    if (oi === q.correct) {
+      btn.classList.add(oi === chosen ? 'correct-ans' : 'reveal-correct');
+    } else if (oi === chosen && !isCorrect) {
+      btn.classList.add('wrong-ans');
+    }
+  });
+
+  const fb = document.getElementById('fb-' + q.id);
+  const correctLetter = letters[q.correct];
+  const correctText = q.options[q.correct];
+  if (isCorrect) {
+    fb.className = 'feedback correct-fb show';
+    fb.innerHTML = `<strong>✓ Correct!</strong> <strong>${correctLetter}. ${correctText}</strong>`;
+  } else {
+    fb.className = 'feedback wrong-fb show';
+    fb.innerHTML = `<strong>✗ Incorrect.</strong> The answer is <strong>${correctLetter}. ${correctText}</strong>`;
+  }
+
+  updateStats();
+}
+
+const letters = ['A','B','C','D'];
+
+function updateStats() {
+  document.getElementById('answeredCount').textContent = Object.keys(answered).length;
+  document.getElementById('scoreCount').textContent = scores.correct;
+  updateProgress();
+}
+
+function updateProgress() {
+  const pct = scores.total ? (Object.keys(answered).length / scores.total * 100) : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function resetAll() {
+  answered = {};
+  scores.correct = 0;
+  updateStats();
+  buildExam();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+buildExam();
+</script>
+</body>
+</html>
