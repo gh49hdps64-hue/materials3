@@ -255,6 +255,57 @@
   .feedback.wrong-fb { background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.24); color: #fca5a5; }
   .feedback strong { font-weight: 500; }
 
+
+  .q-tag {
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    color: var(--accent3);
+    border: 1px solid rgba(251,146,60,0.35);
+    padding: 2px 9px;
+    border-radius: 5px;
+  }
+  .opt.multi .opt-letter { border-radius: 50%; }
+  .opt.selected { border-color: var(--accent2); background: rgba(129,140,248,0.1); }
+  .opt.selected .opt-letter { background: var(--accent2); color: #0c0e14; }
+  .check-btn {
+    margin-top: 12px;
+    background: transparent;
+    border: 1px solid var(--accent2);
+    color: var(--accent2);
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
+  .check-btn:disabled { opacity: 0.4; cursor: default; }
+  .check-btn:not(:disabled):hover { background: rgba(129,140,248,0.1); }
+  .review-bar { margin-top: 40px; text-align: center; }
+  .review-btn {
+    background: transparent;
+    border: 1px solid var(--wrong);
+    color: var(--wrong);
+    border-radius: 8px;
+    padding: 12px 22px;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    cursor: pointer;
+    width: 100%;
+    max-width: 360px;
+  }
+  .review-btn:not(:disabled):hover { background: rgba(248,113,113,0.08); }
+  .review-btn:disabled { opacity: 0.35; cursor: default; }
+  .review-note { font-family: var(--mono); font-size: 0.7rem; color: var(--muted); margin-top: 8px; }
+  .review-banner {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+    background: rgba(248,113,113,0.07);
+    border: 1px solid rgba(248,113,113,0.3);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 24px;
+    font-family: var(--mono); font-size: 0.78rem; color: #fca5a5;
+  }
+
   @media (max-width: 600px) {
     header { padding: 14px 16px; }
     .container { padding: 32px 14px 80px; }
@@ -276,6 +327,7 @@
     <div class="score-pill">Answered: <span id="answeredCount">0</span> / <span id="totalCount">0</span></div>
     <div class="score-pill">Score: <span id="scoreCount">0</span> correct</div>
     <button class="reset-btn-header" onclick="resetAll()">↺ Reset</button>
+    <button class="reset-btn-header" onclick="shuffleAll()">⇄ Reset &amp; Shuffle</button>
   </div>
 </header>
 
@@ -345,32 +397,32 @@ const sections = [
   }
 ];
 
+let view = sections;
+let fullView = sections;   // the full test (original or shuffled) to return to after reviewing
+let reviewing = false;
+let missed = {};           // question id -> true for questions answered incorrectly this round
 let answered = {};
+let selected = {};
 let scores = { correct: 0, total: 0 };
+const letters = ['A','B','C','D','E','F','G','H'];
 
 function buildExam() {
   const container = document.getElementById('examContainer');
   container.innerHTML = '';
   let totalQ = 0;
 
-  sections.forEach((section, si) => {
+  if (reviewing) {
+    const banner = document.createElement('div');
+    banner.className = 'review-banner';
+    banner.innerHTML = '<span>Reviewing your incorrect answers</span><button class="reset-btn-header" onclick="exitReview()">← Back to full test</button>';
+    container.appendChild(banner);
+  }
+
+  view.forEach((section, si) => {
     const secDiv = document.createElement('div');
     secDiv.className = 'section-label';
-
-    const secNum = document.createElement('span');
-    secNum.className = 'section-num';
-    secNum.textContent = `Set ${si + 1}`;
-
-    const secTitle = document.createElement('span');
-    secTitle.className = 'section-title';
-    secTitle.textContent = section.label;
-
-    const secLine = document.createElement('div');
-    secLine.className = 'section-line';
-
-    secDiv.appendChild(secNum);
-    secDiv.appendChild(secTitle);
-    secDiv.appendChild(secLine);
+    secDiv.innerHTML = `<span class="section-num">Set ${section.num || si + 1}</span><span class="section-title"></span><div class="section-line"></div>`;
+    secDiv.querySelector('.section-title').textContent = section.label;
     container.appendChild(secDiv);
 
     section.questions.forEach((q) => {
@@ -381,10 +433,7 @@ function buildExam() {
 
       const meta = document.createElement('div');
       meta.className = 'q-meta';
-      const num = document.createElement('span');
-      num.className = 'q-num';
-      num.textContent = 'Q' + totalQ;
-      meta.appendChild(num);
+      meta.innerHTML = `<span class="q-num">Q${totalQ}</span>` + (q.multi ? '<span class="q-tag">Select all that apply</span>' : '');
       card.appendChild(meta);
 
       const qText = document.createElement('div');
@@ -394,18 +443,26 @@ function buildExam() {
 
       const optWrap = document.createElement('div');
       optWrap.className = 'options';
-      const letters = ['A','B','C','D'];
-
       q.options.forEach((opt, oi) => {
         const btn = document.createElement('button');
-        btn.className = 'opt';
+        btn.className = 'opt' + (q.multi ? ' multi' : '');
         btn.id = 'opt-' + q.id + '-' + oi;
-        btn.innerHTML = `<span class="opt-letter">${letters[oi]}</span><span>${opt}</span>`;
-        btn.addEventListener('click', () => answerQ(q, oi));
+        btn.innerHTML = `<span class="opt-letter">${letters[oi]}</span><span></span>`;
+        btn.lastChild.textContent = opt;
+        btn.addEventListener('click', () => q.multi ? toggleOpt(q, oi) : answerQ(q, oi));
         optWrap.appendChild(btn);
       });
-
       card.appendChild(optWrap);
+
+      if (q.multi) {
+        const check = document.createElement('button');
+        check.className = 'check-btn';
+        check.id = 'check-' + q.id;
+        check.textContent = 'Check answer';
+        check.disabled = true;
+        check.addEventListener('click', () => checkMulti(q));
+        card.appendChild(check);
+      }
 
       const feedback = document.createElement('div');
       feedback.className = 'feedback';
@@ -416,45 +473,67 @@ function buildExam() {
     });
   });
 
+  const bar = document.createElement('div');
+  bar.className = 'review-bar';
+  bar.innerHTML = '<button class="review-btn" id="reviewBtn" onclick="reviewIncorrect()" disabled></button><div class="review-note" id="reviewNote"></div>';
+  container.appendChild(bar);
+
   document.getElementById('totalCount').textContent = totalQ;
   scores.total = totalQ;
+  updateReviewBtn();
   updateProgress();
+}
+
+function toggleOpt(q, oi) {
+  if (answered[q.id]) return;
+  const set = selected[q.id] || (selected[q.id] = new Set());
+  if (set.has(oi)) set.delete(oi); else set.add(oi);
+  document.getElementById('opt-' + q.id + '-' + oi).classList.toggle('selected', set.has(oi));
+  document.getElementById('check-' + q.id).disabled = set.size === 0;
+}
+
+function finishCard(q, isCorrect, html) {
+  answered[q.id] = true;
+  if (isCorrect) scores.correct++; else missed[q.id] = true;
+  updateReviewBtn();
+  document.getElementById('card-' + q.id).classList.add(isCorrect ? 'answered-correct' : 'answered-wrong');
+  const fb = document.getElementById('fb-' + q.id);
+  fb.className = 'feedback ' + (isCorrect ? 'correct-fb' : 'wrong-fb') + ' show';
+  fb.innerHTML = html;
+  updateStats();
 }
 
 function answerQ(q, chosen) {
   if (answered[q.id]) return;
-  answered[q.id] = true;
   const isCorrect = chosen === q.correct;
-  if (isCorrect) scores.correct++;
-
-  const card = document.getElementById('card-' + q.id);
-  card.classList.add(isCorrect ? 'answered-correct' : 'answered-wrong');
-
   q.options.forEach((_, oi) => {
     const btn = document.getElementById('opt-' + q.id + '-' + oi);
     btn.disabled = true;
-    if (oi === q.correct) {
-      btn.classList.add(oi === chosen ? 'correct-ans' : 'reveal-correct');
-    } else if (oi === chosen && !isCorrect) {
-      btn.classList.add('wrong-ans');
-    }
+    if (oi === q.correct) btn.classList.add(oi === chosen ? 'correct-ans' : 'reveal-correct');
+    else if (oi === chosen) btn.classList.add('wrong-ans');
   });
-
-  const fb = document.getElementById('fb-' + q.id);
-  const correctLetter = letters[q.correct];
-  const correctText = q.options[q.correct];
-  if (isCorrect) {
-    fb.className = 'feedback correct-fb show';
-    fb.innerHTML = `<strong>✓ Correct!</strong> <strong>${correctLetter}. ${correctText}</strong>`;
-  } else {
-    fb.className = 'feedback wrong-fb show';
-    fb.innerHTML = `<strong>✗ Incorrect.</strong> The answer is <strong>${correctLetter}. ${correctText}</strong>`;
-  }
-
-  updateStats();
+  const ans = `<strong>${letters[q.correct]}. ${esc(q.options[q.correct])}</strong>`;
+  finishCard(q, isCorrect, isCorrect ? `<strong>✓ Correct!</strong> ${ans}` : `<strong>✗ Incorrect.</strong> The answer is ${ans}`);
 }
 
-const letters = ['A','B','C','D'];
+function checkMulti(q) {
+  if (answered[q.id]) return;
+  const set = selected[q.id] || new Set();
+  const right = new Set(q.correct);
+  const isCorrect = set.size === right.size && [...set].every(i => right.has(i));
+  q.options.forEach((_, oi) => {
+    const btn = document.getElementById('opt-' + q.id + '-' + oi);
+    btn.disabled = true;
+    btn.classList.remove('selected');
+    if (right.has(oi)) btn.classList.add(set.has(oi) ? 'correct-ans' : 'reveal-correct');
+    else if (set.has(oi)) btn.classList.add('wrong-ans');
+  });
+  document.getElementById('check-' + q.id).style.display = 'none';
+  const ans = q.correct.map(i => `<strong>${letters[i]}. ${esc(q.options[i])}</strong>`).join(', ');
+  finishCard(q, isCorrect, isCorrect ? `<strong>✓ Correct!</strong> ${ans}` : `<strong>✗ Incorrect.</strong> The correct answers are ${ans}`);
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
 function updateStats() {
   document.getElementById('answeredCount').textContent = Object.keys(answered).length;
@@ -467,8 +546,64 @@ function updateProgress() {
   document.getElementById('progressFill').style.width = pct + '%';
 }
 
+function updateReviewBtn() {
+  const btn = document.getElementById('reviewBtn');
+  if (!btn) return;
+  const n = Object.keys(missed).length;
+  btn.disabled = n === 0;
+  btn.textContent = n ? `Review incorrect answers (${n})` : 'Review incorrect answers';
+  document.getElementById('reviewNote').textContent = n ? '' : 'Questions you miss will show up here to retry.';
+}
+
+// Pull only the questions missed in this round, keeping their sets and order.
+function reviewIncorrect() {
+  if (!Object.keys(missed).length) return;
+  if (!reviewing) fullView = view;
+  view = view
+    .map((sec, si) => ({ label: sec.label, num: sec.num || si + 1, questions: sec.questions.filter(q => missed[q.id]) }))
+    .filter(sec => sec.questions.length);
+  reviewing = true;
+  resetAll();
+}
+
+function exitReview() {
+  view = fullView;
+  reviewing = false;
+  resetAll();
+}
+
+function shuffled(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// Shuffle question order within each set and answer order within each question.
+// Each option keeps its original index, so the correct answer(s) are remapped exactly.
+function shuffleAll() {
+  reviewing = false;
+  view = sections.map(sec => ({
+    label: sec.label,
+    questions: shuffled(sec.questions).map(q => {
+      const order = shuffled(q.options.map((_, i) => i));
+      const options = order.map(i => q.options[i]);
+      const correct = q.multi
+        ? q.correct.map(c => order.indexOf(c)).sort((a, b) => a - b)
+        : order.indexOf(q.correct);
+      return Object.assign({}, q, { options, correct });
+    })
+  }));
+  fullView = view;
+  resetAll();
+}
+
 function resetAll() {
   answered = {};
+  selected = {};
+  missed = {};
   scores.correct = 0;
   updateStats();
   buildExam();
