@@ -306,6 +306,58 @@
     font-family: var(--mono); font-size: 0.78rem; color: #fca5a5;
   }
 
+
+  .type-row { display: flex; gap: 8px; }
+  .type-input {
+    flex: 1; min-width: 0;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 11px 14px;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 16px;
+    outline: none;
+  }
+  .type-input:focus { border-color: var(--accent); }
+  .type-input.in-correct { border-color: var(--correct); background: rgba(52,211,153,0.08); }
+  .type-input.in-wrong { border-color: var(--wrong); background: rgba(248,113,113,0.07); color: #fca5a5; text-decoration: line-through; }
+  .type-input.in-blank { border-color: var(--wrong); }
+  .type-row .check-btn { margin-top: 0; }
+  .link-btn {
+    background: none; border: none; padding: 0; margin-top: 10px;
+    color: var(--muted); font-family: var(--mono); font-size: 0.72rem; cursor: pointer;
+    text-decoration: underline; text-underline-offset: 3px;
+  }
+  .link-btn:hover { color: var(--text); }
+  .override-btn {
+    margin-left: 8px; background: transparent; border: 1px solid rgba(252,165,165,0.5);
+    color: #fca5a5; border-radius: 6px; padding: 2px 9px; font-family: var(--mono); font-size: 0.7rem; cursor: pointer;
+  }
+  .override-btn:hover { border-color: var(--correct); color: var(--correct); }
+
+
+  .mode-toggle {
+    display: inline-flex;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 3px;
+  }
+  .mode-btn {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    border-radius: 16px;
+    padding: 4px 12px;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .mode-btn.active { background: var(--accent); color: #0c0e14; font-weight: 500; }
+  .mode-btn:not(.active):hover { color: var(--text); }
+
   @media (max-width: 600px) {
     header { padding: 14px 16px; }
     .container { padding: 32px 14px 80px; }
@@ -324,6 +376,10 @@
     <div class="subtitle">Digital Manufacturing · Adaptive Learning 1 · Adaptive Learning 2 · Finishing and Polishing</div>
   </div>
   <div class="score-bar">
+    <div class="mode-toggle" role="group" aria-label="Answer format">
+      <button class="mode-btn" data-mode="mc" onclick="setMode('mc')">Multiple choice</button>
+      <button class="mode-btn" data-mode="typed" onclick="setMode('typed')">Type answer</button>
+    </div>
     <div class="score-pill">Answered: <span id="answeredCount">0</span> / <span id="totalCount">0</span></div>
     <div class="score-pill">Score: <span id="scoreCount">0</span> correct</div>
     <button class="reset-btn-header" onclick="resetAll()">↺ Reset</button>
@@ -335,77 +391,843 @@
 
 <script>
 const sections = [
-  {
-    label: "Digital Manufacturing",
-    questions: [
-      { id: "dm01", text: "CAM calculates these for milling — the equivalent of slices used in 3D printing.", options: ["Toolpaths", "Slices", "Support structures", "Bur trajectories"], correct: 0 },
-      { id: "dm02", text: "Orientation relative to the printed layers at which a 3D-printed denture base is strongest.", options: ["Perpendicular to layers", "At 45 degrees", "Parallel to layers", "Any direction is equal"], correct: 2 },
-      { id: "dm03", text: "Soft-milled pre-sintered zirconia shrinks 20–25% during this processing step.", options: ["Glazing", "Polishing", "Debinding", "Sintering"], correct: 3 },
-      { id: "dm04", text: "A printed restoration's properties depend most on this person's settings.", options: ["Material manufacturer", "Operator", "Printer manufacturer", "Prescribing dentist"], correct: 1 },
-      { id: "dm05", text: "Along with material jetting and powder bed fusion, this printing family completes the three dominant 3D printing technologies in dentistry.", options: ["Vat photopolymerization", "Fused deposition modeling", "Binder jetting", "Selective laser sintering"], correct: 0 },
-      { id: "dm06", text: "What separates SLA, DLP, and LCD from one another within vat photopolymerization.", options: ["Resin chemistry", "Light delivery method", "Layer thickness achievable", "Build platform orientation"], correct: 1 },
-      { id: "dm07", text: "Milling with a worn bur mainly causes these at the margins.", options: ["Chipping and fractures", "Darker staining", "Wider gaps", "Rougher internal surfaces"], correct: 2 },
-      { id: "dm08", text: "Property mainly improved by adding more milling axes (e.g., 3-axis to 5-axis).", options: ["Material translucency", "Shade matching accuracy", "Surface gloss", "Marginal fit"], correct: 3 },
-      { id: "dm09", text: "What a 3D-printed occlusal guard remains if washed but NOT post-cured.", options: ["Cytotoxic", "Dimensionally unstable", "Underpolymerized but biocompatible", "Fully functional with reduced strength"], correct: 0 },
-      { id: "dm10", text: "Along with edges and faces, these build a triangle mesh (STL file).", options: ["Vertices", "Nodes", "Pixels", "Voxels"], correct: 0 }
-    ]
-  },
-  {
-    label: "Adaptive Learning 1",
-    questions: [
-      { id: "a101", text: "Main monomer of the bond; more hydrophobic and also present in resin composites.", options: ["TEGDMA", "UDMA", "Bis-GMA", "MMA"], correct: 2 },
-      { id: "a102", text: "Preventing this is NOT a valid reason to replace amalgam restorations.", options: ["Secondary caries", "Fracture of remaining tooth structure", "Mercury poisoning", "Esthetic preference"], correct: 2 },
-      { id: "a103", text: "Second step of a total-etch 3-step adhesive system.", options: ["Etchant", "Bond", "Primer", "Self-etch adhesive"], correct: 2 },
-      { id: "a104", text: "OptiBond FL bond has too few of these monomers to be applied directly to dentin.", options: ["Hydrophobic", "Acidic", "Cross-linking", "Hydrophilic"], correct: 3 },
-      { id: "a105", text: "Ideal condition of the dentin surface after etching and rinsing.", options: ["Moist", "Dry", "Saturated with water", "Coated with air"], correct: 0 },
-      { id: "a106", text: "Isolation used during amalgam removal for patient protection and a dry field.", options: ["Rubber dam", "Cotton rolls", "Retraction cord", "Dry angle"], correct: 0 },
-      { id: "a107", text: "Etching enamel with phosphoric acid increases surface roughness, surface area, and surface this.", options: ["Conductance", "Solubility", "Porosity", "Energy"], correct: 3 },
-      { id: "a108", text: "Cavity preparation design with the highest C-factor.", options: ["Class II", "Class III", "Class V", "Class I"], correct: 3 },
-      { id: "a109", text: "Agitating phosphoric acid shear-thins it, reducing this.", options: ["Surface tension", "pH", "Concentration", "Viscosity"], correct: 3 },
-      { id: "a110", text: "VALO mode used to cure each 2.0 mm increment of Harmonize composite.", options: ["Standard", "Turbo", "Xtra power", "High power"], correct: 0 }
-    ]
-  },
-  {
-    label: "Adaptive Learning 2",
-    questions: [
-      { id: "a201", text: "Conditioning agent applied to dentin for 10 to 20 seconds before glass ionomer placement.", options: ["Phosphoric acid", "EDTA", "Polyacrylic acid", "Maleic acid"], correct: 2 },
-      { id: "a202", text: "Sodium ___: toothpaste fluoride that must be hydrolyzed by salivary enzymes to release fluoride.", options: ["Fluoride", "Stannous fluoride", "Monofluorophosphate", "Hexafluorosilicate"], correct: 2 },
-      { id: "a203", text: "Used to remove carious tissue during ART (Atraumatic Restorative Treatment).", options: ["High-speed carbide burs", "Laser ablation", "Hand instruments", "Air abrasion"], correct: 2 },
-      { id: "a204", text: "Common side effect of silver diamine fluoride on carious lesions.", options: ["White discoloration", "Black staining", "Increased sensitivity", "Gingival inflammation"], correct: 1 },
-      { id: "a205", text: "Topical fluoride product with the highest fluoride concentration.", options: ["OTC mouthwash", "Varnish", "Prescription toothpaste", "Fluoride gel"], correct: 1 },
-      { id: "a206", text: "Isolation used to place a glass ionomer, since it needs moisture to set.", options: ["Cotton rolls", "Rubber dam", "Retraction cord", "Dry angle"], correct: 0 },
-      { id: "a207", text: "Type of bond glass ionomer forms with tooth structure, an advantage in caries-prone areas.", options: ["Mechanical", "Chemical", "Micromechanical", "Ionic diffusion only"], correct: 1 },
-      { id: "a208", text: "Fluoride concentration in drinking water (ppm) recommended by the USPHS and ADA.", options: ["Point five (.5)", "One (1.0)", "One point two (1.2)", "Point seven (.7)"], correct: 3 },
-      { id: "a209", text: "How long to wait before finishing and polishing a conventional glass ionomer.", options: ["Immediately", "One week", "Ten minutes", "Twenty-four hours"], correct: 3 },
-      { id: "a210", text: "Unlike strength, esthetics, and wear resistance, this is NOT higher in RMGI than in conventional glass ionomer.", options: ["Strength", "Fluoride release", "Wear resistance", "Esthetics"], correct: 1 }
-    ]
-  },
-  {
-    label: "Finishing and Polishing",
-    questions: [
-      { id: "fp01", text: "What Co-Cr alloys cannot be, unlike gold.", options: ["Polished", "Sintered", "Annealed", "Burnished"], correct: 3 },
-      { id: "fp02", text: "What the abrasive must be relative to the substrate for efficient abrasion.", options: ["Harder", "Softer", "Equal hardness", "Smoother"], correct: 0 },
-      { id: "fp03", text: "Polishing uses abrasive particles of this size or less.", options: ["Five microns", "Two microns", "Thirty microns", "Forty-five microns"], correct: 0 },
-      { id: "fp04", text: "State in which zirconia is best polished.", options: ["Sintered", "Presintered", "Glazed state", "Stained state"], correct: 1 },
-      { id: "fp05", text: "Degrees the stroke direction is turned at each new grit.", options: ["Forty-five", "Ninety", "Thirty", "One eighty"], correct: 1 },
-      { id: "fp06", text: "Amalgams of this particle shape can be polished sooner.", options: ["Admixed", "Spherical", "Lathe-cut", "Low-copper"], correct: 1 },
-      { id: "fp07", text: "Ra in microns below which further smoothing no longer reduces plaque retention.", options: ["Point zero two (.02)", "Point five (.5)", "Point two (.2)", "Two (2.0)"], correct: 2 },
-      { id: "fp08", text: "Polishing a glass-ceramic comes at this point relative to glazing.", options: ["After", "Before", "Instead of", "Simultaneously with"], correct: 1 },
-      { id: "fp09", text: "Why the Mylar strip surface of a resin composite is removed.", options: ["Filler rich", "Too opaque", "Resin rich", "Stain resistant"], correct: 2 },
-      { id: "fp10", text: "Abrasive grains glued to a disc or strip.", options: ["Bonded", "Sintered", "Laminated", "Coated"], correct: 3 }
-    ]
-  }
+ {
+  "label": "Digital Manufacturing",
+  "questions": [
+   {
+    "id": "dm01",
+    "text": "CAM calculates these for milling — the equivalent of slices used in 3D printing.",
+    "options": [
+     "Toolpaths",
+     "Slices",
+     "Support structures",
+     "Bur trajectories"
+    ],
+    "correct": 0,
+    "answers": [
+     "Toolpaths",
+     "tool paths",
+     "toolpath",
+     "tool path"
+    ],
+    "fuzzy": true
+   },
+   {
+    "id": "dm02",
+    "text": "Orientation relative to the printed layers at which a 3D-printed denture base is strongest.",
+    "options": [
+     "Perpendicular to layers",
+     "At 45 degrees",
+     "Parallel to layers",
+     "Any direction is equal"
+    ],
+    "correct": 2,
+    "answers": [
+     "Parallel to layers",
+     "parallel to the layers",
+     "parallel",
+     "parallel to layer"
+    ],
+    "fuzzy": true
+   },
+   {
+    "id": "dm03",
+    "text": "Soft-milled pre-sintered zirconia shrinks 20–25% during this processing step.",
+    "options": [
+     "Glazing",
+     "Polishing",
+     "Debinding",
+     "Sintering"
+    ],
+    "correct": 3,
+    "answers": [
+     "Sintering",
+     "sinter"
+    ],
+    "fuzzy": true
+   },
+   {
+    "id": "dm04",
+    "text": "A printed restoration's properties depend most on this person's settings.",
+    "options": [
+     "Material manufacturer",
+     "Operator",
+     "Printer manufacturer",
+     "Prescribing dentist"
+    ],
+    "correct": 1,
+    "answers": [
+     "Operator",
+     "the operator",
+     "operators"
+    ],
+    "fuzzy": true
+   },
+   {
+    "id": "dm05",
+    "text": "Along with material jetting and powder bed fusion, this printing family completes the three dominant 3D printing technologies in dentistry.",
+    "options": [
+     "Vat photopolymerization",
+     "Fused deposition modeling",
+     "Binder jetting",
+     "Selective laser sintering"
+    ],
+    "correct": 0,
+    "answers": [
+     "Vat photopolymerization",
+     "vat",
+     "vat photopolymerisation",
+     "vat polymerization",
+     "vat photo polymerization"
+    ],
+    "fuzzy": true
+   },
+   {
+    "id": "dm06",
+    "text": "What separates SLA, DLP, and LCD from one another within vat photopolymerization.",
+    "options": [
+     "Resin chemistry",
+     "Light delivery method",
+     "Layer thickness achievable",
+     "Build platform orientation"
+    ],
+    "correct": 1,
+    "answers": [
+     "Light delivery",
+     "light delivery method",
+     "light delivery system",
+     "how light is delivered",
+     "method of light delivery"
+    ],
+    "fuzzy": true
+   },
+   {
+    "id": "dm07",
+    "text": "Milling with a worn bur mainly causes these at the margins.",
+    "options": [
+     "Chipping and fractures",
+     "Darker staining",
+     "Wider gaps",
+     "Rougher internal surfaces"
+    ],
+    "correct": 2,
+    "answers": [
+     "Wider gaps",
+     "wide gaps",
+     "larger gaps",
+     "bigger gaps",
+     "gaps",
+     "wider marginal gaps",
+     "marginal gaps"
+    ],
+    "fuzzy": true
+   },
+   {
+    "id": "dm08",
+    "text": "Property mainly improved by adding more milling axes (e.g., 3-axis to 5-axis).",
+    "options": [
+     "Material translucency",
+     "Shade matching accuracy",
+     "Surface gloss",
+     "Marginal fit"
+    ],
+    "correct": 3,
+    "answers": [
+     "Marginal fit",
+     "margin fit",
+     "fit",
+     "marginal adaptation",
+     "marginal accuracy"
+    ],
+    "fuzzy": true
+   },
+   {
+    "id": "dm09",
+    "text": "What a 3D-printed occlusal guard remains if washed but NOT post-cured.",
+    "options": [
+     "Cytotoxic",
+     "Dimensionally unstable",
+     "Underpolymerized but biocompatible",
+     "Fully functional with reduced strength"
+    ],
+    "correct": 0,
+    "answers": [
+     "Cytotoxic",
+     "toxic",
+     "cytotoxicity"
+    ],
+    "fuzzy": true
+   },
+   {
+    "id": "dm10",
+    "text": "Along with edges and faces, these build a triangle mesh (STL file).",
+    "options": [
+     "Vertices",
+     "Nodes",
+     "Pixels",
+     "Voxels"
+    ],
+    "correct": 0,
+    "answers": [
+     "Vertices",
+     "vertex",
+     "vertexes"
+    ],
+    "fuzzy": true
+   }
+  ]
+ },
+ {
+  "label": "Adaptive Learning 1",
+  "questions": [
+   {
+    "id": "a101",
+    "text": "Main monomer of the bond; more hydrophobic and also present in resin composites.",
+    "options": [
+     "TEGDMA",
+     "UDMA",
+     "Bis-GMA",
+     "MMA"
+    ],
+    "correct": 2,
+    "answers": [
+     "Bis-GMA",
+     "bisgma",
+     "bis gma",
+     "bisphenol a glycidyl methacrylate",
+     "bisphenol a glycidyl dimethacrylate"
+    ],
+    "fuzzy": true
+   },
+   {
+    "id": "a102",
+    "text": "Preventing this is NOT a valid reason to replace amalgam restorations.",
+    "options": [
+     "Secondary caries",
+     "Fracture of remaining tooth structure",
+     "Mercury poisoning",
+     "Esthetic preference"
+    ],
+    "correct": 2,
+    "answers": [
+     "Mercury poisoning",
+     "mercury toxicity",
+     "poisoning",
+     "mercury"
+    ],
+    "fuzzy": true
+   },
+   {
+    "id": "a103",
+    "text": "Second step of a total-etch 3-step adhesive system.",
+    "options": [
+     "Etchant",
+     "Bond",
+     "Primer",
+     "Self-etch adhesive"
+    ],
+    "correct": 2,
+    "answers": [
+     "Primer",
+     "priming",
+     "prime"
+    ],
+    "fuzzy": true
+   },
+   {
+    "id": "a104",
+    "text": "OptiBond FL bond has too few of these monomers to be applied directly to dentin.",
+    "options": [
+     "Hydrophobic",
+     "Acidic",
+     "Cross-linking",
+     "Hydrophilic"
+    ],
+    "correct": 3,
+    "answers": [
+     "Hydrophilic",
+     "hydrophilic monomers",
+     "hydrophilic monomer"
+    ],
+    "fuzzy": false
+   },
+   {
+    "id": "a105",
+    "text": "Ideal condition of the dentin surface after etching and rinsing.",
+    "options": [
+     "Moist",
+     "Dry",
+     "Saturated with water",
+     "Coated with air"
+    ],
+    "correct": 0,
+    "answers": [
+     "Moist",
+     "wet",
+     "damp",
+     "slightly moist",
+     "visibly moist",
+     "moist dentin"
+    ],
+    "fuzzy": true
+   },
+   {
+    "id": "a106",
+    "text": "Isolation used during amalgam removal for patient protection and a dry field.",
+    "options": [
+     "Rubber dam",
+     "Cotton rolls",
+     "Retraction cord",
+     "Dry angle"
+    ],
+    "correct": 0,
+    "answers": [
+     "Rubber dam",
+     "dental dam",
+     "rubberdam"
+    ],
+    "fuzzy": true
+   },
+   {
+    "id": "a107",
+    "text": "Etching enamel with phosphoric acid increases surface roughness, surface area, and surface this.",
+    "options": [
+     "Conductance",
+     "Solubility",
+     "Porosity",
+     "Energy"
+    ],
+    "correct": 3,
+    "answers": [
+     "Energy",
+     "surface energy",
+     "free energy",
+     "surface free energy"
+    ],
+    "fuzzy": true
+   },
+   {
+    "id": "a108",
+    "text": "Cavity preparation design with the highest C-factor.",
+    "options": [
+     "Class II",
+     "Class III",
+     "Class V",
+     "Class I"
+    ],
+    "correct": 3,
+    "answers": [
+     "Class I",
+     "class 1",
+     "class one",
+     "class i prep",
+     "class i preparation"
+    ],
+    "fuzzy": false
+   },
+   {
+    "id": "a109",
+    "text": "Agitating phosphoric acid shear-thins it, reducing this.",
+    "options": [
+     "Surface tension",
+     "pH",
+     "Concentration",
+     "Viscosity"
+    ],
+    "correct": 3,
+    "answers": [
+     "Viscosity"
+    ],
+    "fuzzy": true
+   },
+   {
+    "id": "a110",
+    "text": "VALO mode used to cure each 2.0 mm increment of Harmonize composite.",
+    "options": [
+     "Standard",
+     "Turbo",
+     "Xtra power",
+     "High power"
+    ],
+    "correct": 0,
+    "answers": [
+     "Standard",
+     "standard mode",
+     "standard power"
+    ],
+    "fuzzy": true
+   }
+  ]
+ },
+ {
+  "label": "Adaptive Learning 2",
+  "questions": [
+   {
+    "id": "a201",
+    "text": "Conditioning agent applied to dentin for 10 to 20 seconds before glass ionomer placement.",
+    "options": [
+     "Phosphoric acid",
+     "EDTA",
+     "Polyacrylic acid",
+     "Maleic acid"
+    ],
+    "correct": 2,
+    "answers": [
+     "Polyacrylic acid",
+     "polyacrylic",
+     "poly acrylic acid",
+     "paa",
+     "polyacrylic acid conditioner"
+    ],
+    "fuzzy": true
+   },
+   {
+    "id": "a202",
+    "text": "Sodium ___: toothpaste fluoride that must be hydrolyzed by salivary enzymes to release fluoride.",
+    "options": [
+     "Fluoride",
+     "Stannous fluoride",
+     "Monofluorophosphate",
+     "Hexafluorosilicate"
+    ],
+    "correct": 2,
+    "answers": [
+     "Monofluorophosphate",
+     "mfp",
+     "smfp",
+     "sodium monofluorophosphate"
+    ],
+    "fuzzy": true
+   },
+   {
+    "id": "a203",
+    "text": "Used to remove carious tissue during ART (Atraumatic Restorative Treatment).",
+    "options": [
+     "High-speed carbide burs",
+     "Laser ablation",
+     "Hand instruments",
+     "Air abrasion"
+    ],
+    "correct": 2,
+    "answers": [
+     "Hand instruments",
+     "hand instrument",
+     "hand instrumentation",
+     "hand tools",
+     "spoon excavator",
+     "spoon excavators"
+    ],
+    "fuzzy": true
+   },
+   {
+    "id": "a204",
+    "text": "Common side effect of silver diamine fluoride on carious lesions.",
+    "options": [
+     "White discoloration",
+     "Black staining",
+     "Increased sensitivity",
+     "Gingival inflammation"
+    ],
+    "correct": 1,
+    "answers": [
+     "Black staining",
+     "black stain",
+     "black stains",
+     "black discoloration",
+     "dark staining",
+     "staining",
+     "black"
+    ],
+    "fuzzy": true
+   },
+   {
+    "id": "a205",
+    "text": "Topical fluoride product with the highest fluoride concentration.",
+    "options": [
+     "OTC mouthwash",
+     "Varnish",
+     "Prescription toothpaste",
+     "Fluoride gel"
+    ],
+    "correct": 1,
+    "answers": [
+     "Varnish",
+     "fluoride varnish",
+     "5% naf varnish",
+     "naf varnish"
+    ],
+    "fuzzy": true
+   },
+   {
+    "id": "a206",
+    "text": "Isolation used to place a glass ionomer, since it needs moisture to set.",
+    "options": [
+     "Cotton rolls",
+     "Rubber dam",
+     "Retraction cord",
+     "Dry angle"
+    ],
+    "correct": 0,
+    "answers": [
+     "Cotton rolls",
+     "cotton roll",
+     "cotton"
+    ],
+    "fuzzy": true
+   },
+   {
+    "id": "a207",
+    "text": "Type of bond glass ionomer forms with tooth structure, an advantage in caries-prone areas.",
+    "options": [
+     "Mechanical",
+     "Chemical",
+     "Micromechanical",
+     "Ionic diffusion only"
+    ],
+    "correct": 1,
+    "answers": [
+     "Chemical",
+     "chemical bond",
+     "chemical bonding",
+     "ionic",
+     "ionic bond",
+     "chemical adhesion"
+    ],
+    "fuzzy": false
+   },
+   {
+    "id": "a208",
+    "text": "Fluoride concentration in drinking water (ppm) recommended by the USPHS and ADA.",
+    "options": [
+     "Point five (.5)",
+     "One (1.0)",
+     "One point two (1.2)",
+     "Point seven (.7)"
+    ],
+    "correct": 3,
+    "answers": [
+     "0.7 ppm",
+     ".7",
+     "0.7",
+     "point seven",
+     "0.7 ppm",
+     ".7 ppm",
+     "point seven ppm",
+     "point 7",
+     "0.70"
+    ],
+    "fuzzy": false
+   },
+   {
+    "id": "a209",
+    "text": "How long to wait before finishing and polishing a conventional glass ionomer.",
+    "options": [
+     "Immediately",
+     "One week",
+     "Ten minutes",
+     "Twenty-four hours"
+    ],
+    "correct": 3,
+    "answers": [
+     "24 hours",
+     "twenty four hours",
+     "24 hrs",
+     "24 hr",
+     "24h",
+     "24 hour",
+     "one day",
+     "1 day",
+     "24"
+    ],
+    "fuzzy": false
+   },
+   {
+    "id": "a210",
+    "text": "Unlike strength, esthetics, and wear resistance, this is NOT higher in RMGI than in conventional glass ionomer.",
+    "options": [
+     "Strength",
+     "Fluoride release",
+     "Wear resistance",
+     "Esthetics"
+    ],
+    "correct": 1,
+    "answers": [
+     "Fluoride release",
+     "fluoride",
+     "f release",
+     "fluoride releasing",
+     "release of fluoride"
+    ],
+    "fuzzy": true
+   }
+  ]
+ },
+ {
+  "label": "Finishing and Polishing",
+  "questions": [
+   {
+    "id": "fp01",
+    "text": "What Co-Cr alloys cannot be, unlike gold.",
+    "options": [
+     "Polished",
+     "Sintered",
+     "Annealed",
+     "Burnished"
+    ],
+    "correct": 3,
+    "answers": [
+     "Burnished",
+     "burnish",
+     "burnishable",
+     "burnishing"
+    ],
+    "fuzzy": true
+   },
+   {
+    "id": "fp02",
+    "text": "What the abrasive must be relative to the substrate for efficient abrasion.",
+    "options": [
+     "Harder",
+     "Softer",
+     "Equal hardness",
+     "Smoother"
+    ],
+    "correct": 0,
+    "answers": [
+     "Harder",
+     "hard",
+     "more hard"
+    ],
+    "fuzzy": true
+   },
+   {
+    "id": "fp03",
+    "text": "Polishing uses abrasive particles of this size or less.",
+    "options": [
+     "Five microns",
+     "Two microns",
+     "Thirty microns",
+     "Forty-five microns"
+    ],
+    "correct": 0,
+    "answers": [
+     "5 microns",
+     "five microns",
+     "5 micron",
+     "5 um",
+     "5um",
+     "5 µm",
+     "5 μm",
+     "5",
+     "five",
+     "5 micrometers"
+    ],
+    "fuzzy": false
+   },
+   {
+    "id": "fp04",
+    "text": "State in which zirconia is best polished.",
+    "options": [
+     "Sintered",
+     "Presintered",
+     "Glazed state",
+     "Stained state"
+    ],
+    "correct": 1,
+    "answers": [
+     "Presintered",
+     "pre sintered",
+     "green state",
+     "presintered state",
+     "green",
+     "pre sintered state"
+    ],
+    "fuzzy": true
+   },
+   {
+    "id": "fp05",
+    "text": "Degrees the stroke direction is turned at each new grit.",
+    "options": [
+     "Forty-five",
+     "Ninety",
+     "Thirty",
+     "One eighty"
+    ],
+    "correct": 1,
+    "answers": [
+     "90 degrees",
+     "ninety",
+     "90",
+     "ninety degrees",
+     "90°",
+     "90 deg"
+    ],
+    "fuzzy": false
+   },
+   {
+    "id": "fp06",
+    "text": "Amalgams of this particle shape can be polished sooner.",
+    "options": [
+     "Admixed",
+     "Spherical",
+     "Lathe-cut",
+     "Low-copper"
+    ],
+    "correct": 1,
+    "answers": [
+     "Spherical",
+     "sphere",
+     "spheres",
+     "round"
+    ],
+    "fuzzy": true
+   },
+   {
+    "id": "fp07",
+    "text": "Ra in microns below which further smoothing no longer reduces plaque retention.",
+    "options": [
+     "Point zero two (.02)",
+     "Point five (.5)",
+     "Point two (.2)",
+     "Two (2.0)"
+    ],
+    "correct": 2,
+    "answers": [
+     "0.2 microns",
+     ".2",
+     "0.2",
+     "point two",
+     "0.2 um",
+     ".2 microns",
+     "0.2 µm",
+     "0.2 μm",
+     "point 2",
+     "0.2 micron"
+    ],
+    "fuzzy": false
+   },
+   {
+    "id": "fp08",
+    "text": "Polishing a glass-ceramic comes at this point relative to glazing.",
+    "options": [
+     "After",
+     "Before",
+     "Instead of",
+     "Simultaneously with"
+    ],
+    "correct": 1,
+    "answers": [
+     "Before",
+     "prior",
+     "before glazing",
+     "prior to glazing"
+    ],
+    "fuzzy": true
+   },
+   {
+    "id": "fp09",
+    "text": "Why the Mylar strip surface of a resin composite is removed.",
+    "options": [
+     "Filler rich",
+     "Too opaque",
+     "Resin rich",
+     "Stain resistant"
+    ],
+    "correct": 2,
+    "answers": [
+     "Resin rich",
+     "resinrich",
+     "too much resin",
+     "resin rich layer",
+     "resin rich surface",
+     "resin-rich"
+    ],
+    "fuzzy": true
+   },
+   {
+    "id": "fp10",
+    "text": "Abrasive grains glued to a disc or strip.",
+    "options": [
+     "Bonded",
+     "Sintered",
+     "Laminated",
+     "Coated"
+    ],
+    "correct": 3,
+    "answers": [
+     "Coated",
+     "coated abrasive",
+     "coated abrasives",
+     "coated abrasive disc"
+    ],
+    "fuzzy": true
+   }
+  ]
+ }
 ];
 
+let mode = 'mc';
+try { if (localStorage.getItem('quizMode') === 'typed') mode = 'typed'; } catch (e) {}
 let view = sections;
-let fullView = sections;   // the full test (original or shuffled) to return to after reviewing
+let fullView = sections;
 let reviewing = false;
-let missed = {};           // question id -> true for questions answered incorrectly this round
+let missed = {};
 let answered = {};
 let selected = {};
 let scores = { correct: 0, total: 0 };
 const letters = ['A','B','C','D','E','F','G','H'];
 
+// ---------- answer matching ----------
+function norm(s) {
+  return s.toLowerCase()
+    .replace(/[µμ]/g, 'u')
+    .replace(/[‐-–—_\/-]/g, ' ')
+    .replace(/[^a-z0-9. ]/g, '')
+    .replace(/\b(the|a|an)\b/g, ' ')
+    .replace(/\s+/g, ' ').trim();
+}
+function squash(s) { return norm(s).replace(/ /g, ''); }
+function lev(a, b) {
+  const m = a.length, n = b.length;
+  const d = Array.from({length: m + 1}, (_, i) => [i]);
+  for (let j = 1; j <= n; j++) d[0][j] = j;
+  for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++)
+    d[i][j] = Math.min(d[i-1][j] + 1, d[i][j-1] + 1, d[i-1][j-1] + (a[i-1] === b[j-1] ? 0 : 1));
+  return d[m][n];
+}
+function isCorrect(q, typed) {
+  const t = squash(typed);
+  if (!t) return false;
+  const tNoS = t.replace(/s$/, '');
+  for (const ans of q.answers) {
+    const a = squash(ans);
+    if (t === a || tNoS === a.replace(/s$/, '')) return true;
+    if (q.fuzzy) {
+      const tol = a.length >= 10 ? 2 : a.length >= 5 ? 1 : 0;
+      if (tol && lev(t, a) <= tol) return true;
+    }
+  }
+  return false;
+}
+
+
+// ---------- mode switch ----------
+function setMode(m) {
+  if (m === mode) return;
+  mode = m;
+  try { localStorage.setItem('quizMode', m); } catch (e) {}
+  syncModeButtons();
+  resetAll();
+}
+function syncModeButtons() {
+  document.querySelectorAll('.mode-btn').forEach(b => {
+    const on = b.dataset.mode === mode;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-pressed', on);
+  });
+}
+
+// ---------- rendering ----------
 function buildExam() {
   const container = document.getElementById('examContainer');
   container.innerHTML = '';
@@ -430,45 +1252,39 @@ function buildExam() {
       const card = document.createElement('div');
       card.className = 'q-card';
       card.id = 'card-' + q.id;
+      card.innerHTML = `<div class="q-meta"><span class="q-num">Q${totalQ}</span></div><div class="q-text"></div>`;
+      card.querySelector('.q-text').textContent = q.text;
 
-      const meta = document.createElement('div');
-      meta.className = 'q-meta';
-      meta.innerHTML = `<span class="q-num">Q${totalQ}</span>` + (q.multi ? '<span class="q-tag">Select all that apply</span>' : '');
-      card.appendChild(meta);
-
-      const qText = document.createElement('div');
-      qText.className = 'q-text';
-      qText.textContent = q.text;
-      card.appendChild(qText);
-
-      const optWrap = document.createElement('div');
-      optWrap.className = 'options';
-      q.options.forEach((opt, oi) => {
-        const btn = document.createElement('button');
-        btn.className = 'opt' + (q.multi ? ' multi' : '');
-        btn.id = 'opt-' + q.id + '-' + oi;
-        btn.innerHTML = `<span class="opt-letter">${letters[oi]}</span><span></span>`;
-        btn.lastChild.textContent = opt;
-        btn.addEventListener('click', () => q.multi ? toggleOpt(q, oi) : answerQ(q, oi));
-        optWrap.appendChild(btn);
-      });
-      card.appendChild(optWrap);
-
-      if (q.multi) {
-        const check = document.createElement('button');
-        check.className = 'check-btn';
-        check.id = 'check-' + q.id;
-        check.textContent = 'Check answer';
-        check.disabled = true;
-        check.addEventListener('click', () => checkMulti(q));
-        card.appendChild(check);
+      if (mode === 'mc') {
+        const optWrap = document.createElement('div');
+        optWrap.className = 'options';
+        q.options.forEach((opt, oi) => {
+          const btn = document.createElement('button');
+          btn.className = 'opt';
+          btn.id = 'opt-' + q.id + '-' + oi;
+          btn.innerHTML = `<span class="opt-letter">${letters[oi]}</span><span></span>`;
+          btn.lastChild.textContent = opt;
+          btn.addEventListener('click', () => answerQ(q, oi));
+          optWrap.appendChild(btn);
+        });
+        card.appendChild(optWrap);
+      } else {
+        const wrap = document.createElement('div');
+        wrap.innerHTML = `
+          <form class="type-row" autocomplete="off">
+            <input class="type-input" id="in-${q.id}" type="text" placeholder="Type your answer" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done">
+            <button class="check-btn" type="submit" id="check-${q.id}">Check</button>
+          </form>
+          <button class="link-btn" id="show-${q.id}" type="button">Show answer</button>`;
+        wrap.querySelector('form').addEventListener('submit', ev => { ev.preventDefault(); submitTyped(q); });
+        wrap.querySelector('.link-btn').addEventListener('click', () => revealQ(q));
+        card.appendChild(wrap);
       }
 
       const feedback = document.createElement('div');
       feedback.className = 'feedback';
       feedback.id = 'fb-' + q.id;
       card.appendChild(feedback);
-
       container.appendChild(card);
     });
   });
@@ -484,28 +1300,20 @@ function buildExam() {
   updateProgress();
 }
 
-function toggleOpt(q, oi) {
-  if (answered[q.id]) return;
-  const set = selected[q.id] || (selected[q.id] = new Set());
-  if (set.has(oi)) set.delete(oi); else set.add(oi);
-  document.getElementById('opt-' + q.id + '-' + oi).classList.toggle('selected', set.has(oi));
-  document.getElementById('check-' + q.id).disabled = set.size === 0;
-}
-
-function finishCard(q, isCorrect, html) {
+function markCard(q, ok, html) {
   answered[q.id] = true;
-  if (isCorrect) scores.correct++; else missed[q.id] = true;
-  updateReviewBtn();
-  document.getElementById('card-' + q.id).classList.add(isCorrect ? 'answered-correct' : 'answered-wrong');
+  if (ok) scores.correct++; else missed[q.id] = true;
+  document.getElementById('card-' + q.id).classList.add(ok ? 'answered-correct' : 'answered-wrong');
   const fb = document.getElementById('fb-' + q.id);
-  fb.className = 'feedback ' + (isCorrect ? 'correct-fb' : 'wrong-fb') + ' show';
+  fb.className = 'feedback ' + (ok ? 'correct-fb' : 'wrong-fb') + ' show';
   fb.innerHTML = html;
   updateStats();
 }
 
+// ----- multiple choice -----
 function answerQ(q, chosen) {
   if (answered[q.id]) return;
-  const isCorrect = chosen === q.correct;
+  const ok = chosen === q.correct;
   q.options.forEach((_, oi) => {
     const btn = document.getElementById('opt-' + q.id + '-' + oi);
     btn.disabled = true;
@@ -513,24 +1321,46 @@ function answerQ(q, chosen) {
     else if (oi === chosen) btn.classList.add('wrong-ans');
   });
   const ans = `<strong>${letters[q.correct]}. ${esc(q.options[q.correct])}</strong>`;
-  finishCard(q, isCorrect, isCorrect ? `<strong>✓ Correct!</strong> ${ans}` : `<strong>✗ Incorrect.</strong> The answer is ${ans}`);
+  markCard(q, ok, ok ? `<strong>✓ Correct!</strong> ${ans}` : `<strong>✗ Incorrect.</strong> The answer is ${ans}`);
 }
 
-function checkMulti(q) {
+// ----- typed -----
+function submitTyped(q) {
   if (answered[q.id]) return;
-  const set = selected[q.id] || new Set();
-  const right = new Set(q.correct);
-  const isCorrect = set.size === right.size && [...set].every(i => right.has(i));
-  q.options.forEach((_, oi) => {
-    const btn = document.getElementById('opt-' + q.id + '-' + oi);
-    btn.disabled = true;
-    btn.classList.remove('selected');
-    if (right.has(oi)) btn.classList.add(set.has(oi) ? 'correct-ans' : 'reveal-correct');
-    else if (set.has(oi)) btn.classList.add('wrong-ans');
-  });
+  const input = document.getElementById('in-' + q.id);
+  if (!input.value.trim()) { input.focus(); return; }
+  finishTyped(q, isCorrect(q, input.value), input.value.trim());
+}
+function revealQ(q) {
+  if (answered[q.id]) return;
+  finishTyped(q, false, document.getElementById('in-' + q.id).value.trim());
+}
+function finishTyped(q, ok, typed) {
+  const input = document.getElementById('in-' + q.id);
+  input.disabled = true;
+  if (!typed) input.placeholder = 'No answer given';
+  input.classList.add(ok ? 'in-correct' : typed ? 'in-wrong' : 'in-blank');
+  if (!ok) input.blur();
   document.getElementById('check-' + q.id).style.display = 'none';
-  const ans = q.correct.map(i => `<strong>${letters[i]}. ${esc(q.options[i])}</strong>`).join(', ');
-  finishCard(q, isCorrect, isCorrect ? `<strong>✓ Correct!</strong> ${ans}` : `<strong>✗ Incorrect.</strong> The correct answers are ${ans}`);
+  document.getElementById('show-' + q.id).style.display = 'none';
+  const ans = `<strong>${esc(q.answers[0])}</strong>`;
+  markCard(q, ok, ok ? `<strong>✓ Correct!</strong> ${ans}`
+    : `<strong>✗ Incorrect.</strong> The answer is ${ans}` + (typed ? ` <button class="override-btn" type="button">Count as correct</button>` : ''));
+  const ob = document.querySelector('#fb-' + q.id + ' .override-btn');
+  if (ob) ob.addEventListener('click', () => overrideQ(q));
+}
+// For when your wording was right but didn't match the answer key.
+function overrideQ(q) {
+  if (!missed[q.id]) return;
+  delete missed[q.id];
+  scores.correct++;
+  const card = document.getElementById('card-' + q.id);
+  card.classList.replace('answered-wrong', 'answered-correct');
+  document.getElementById('in-' + q.id).classList.replace('in-wrong', 'in-correct');
+  const fb = document.getElementById('fb-' + q.id);
+  fb.className = 'feedback correct-fb show';
+  fb.innerHTML = `<strong>✓ Counted as correct.</strong> <strong>${esc(q.answers[0])}</strong>`;
+  updateStats();
 }
 
 function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
@@ -538,14 +1368,13 @@ function esc(s) { const d = document.createElement('div'); d.textContent = s; re
 function updateStats() {
   document.getElementById('answeredCount').textContent = Object.keys(answered).length;
   document.getElementById('scoreCount').textContent = scores.correct;
+  updateReviewBtn();
   updateProgress();
 }
-
 function updateProgress() {
   const pct = scores.total ? (Object.keys(answered).length / scores.total * 100) : 0;
   document.getElementById('progressFill').style.width = pct + '%';
 }
-
 function updateReviewBtn() {
   const btn = document.getElementById('reviewBtn');
   if (!btn) return;
@@ -555,7 +1384,6 @@ function updateReviewBtn() {
   document.getElementById('reviewNote').textContent = n ? '' : 'Questions you miss will show up here to retry.';
 }
 
-// Pull only the questions missed in this round, keeping their sets and order.
 function reviewIncorrect() {
   if (!Object.keys(missed).length) return;
   if (!reviewing) fullView = view;
@@ -565,7 +1393,6 @@ function reviewIncorrect() {
   reviewing = true;
   resetAll();
 }
-
 function exitReview() {
   view = fullView;
   reviewing = false;
@@ -580,20 +1407,15 @@ function shuffled(arr) {
   }
   return a;
 }
-
-// Shuffle question order within each set and answer order within each question.
-// Each option keeps its original index, so the correct answer(s) are remapped exactly.
+// Shuffle question order within each set and answer-choice order within each question.
+// Each choice keeps its original index, so the correct answer is remapped exactly.
 function shuffleAll() {
   reviewing = false;
   view = sections.map(sec => ({
     label: sec.label,
     questions: shuffled(sec.questions).map(q => {
       const order = shuffled(q.options.map((_, i) => i));
-      const options = order.map(i => q.options[i]);
-      const correct = q.multi
-        ? q.correct.map(c => order.indexOf(c)).sort((a, b) => a - b)
-        : order.indexOf(q.correct);
-      return Object.assign({}, q, { options, correct });
+      return Object.assign({}, q, { options: order.map(i => q.options[i]), correct: order.indexOf(q.correct) });
     })
   }));
   fullView = view;
@@ -610,6 +1432,7 @@ function resetAll() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+syncModeButtons();
 buildExam();
 </script>
 </body>
